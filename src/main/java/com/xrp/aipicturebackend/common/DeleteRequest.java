@@ -1,7 +1,9 @@
 package com.xrp.aipicturebackend.common;
 
-import java.io.Serializable;
+import lombok.Data;
 
+import java.io.Serializable;
+@Data
 public class DeleteRequest implements Serializable {
     /**
      * id
