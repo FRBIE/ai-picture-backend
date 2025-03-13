@@ -1,6 +1,5 @@
 package com.xrp.aipicturebackend.service;
 
-import cn.hutool.http.server.HttpServerRequest;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.xrp.aipicturebackend.model.dto.user.UserQueryRequest;
 import com.xrp.aipicturebackend.model.entity.User;
@@ -44,10 +43,14 @@ public interface UserService extends IService<User> {
      * 用户注销
      */
     boolean userLogout(HttpServletRequest request);
-
     UserVO getUserVO(User user);
 
     List<UserVO> getUserVOList(List<User> userList);
 
     QueryWrapper<User> getQueryWrapper(UserQueryRequest userQueryRequest);
+
+    /**
+     * 判断是否为管理员
+     */
+    boolean isAdmin(User user);
 }
