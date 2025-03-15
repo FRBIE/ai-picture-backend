@@ -42,3 +42,14 @@ create table if not exists picture
     INDEX idx_tags (tags),                 -- 提升基于标签的查询性能
     INDEX idx_userId (userId)              -- 提升基于用户 ID 的查询性能
 ) comment '图片' collate = utf8mb4_unicode_ci;
+
+-- 支持图片审核功能
+alter table picture
+    -- 添加新列
+    add column reviewStatus int default 0 not null comment '审核状态: 0-待审核;1-通过;2-拒绝', -- 使用整数（0、1、2）表示不同的审核状态，而不是用字符串，可以节约表的空间、提升查找效率
+    add column reviewMessage varchar(512) null comment '审核信息',
+    add column reviewerId bigint comment '审核人ID',
+    add column reviewTime DATETIME null comment '审核时间';
+-- 创建基于 reviewStatus列的索引
+-- 要根据审核状态筛选图片，所以给该字段添加索引，提升查询性能
+create index idx_reviewStatus on picture(reviewStatus);
