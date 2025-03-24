@@ -52,8 +52,8 @@ public class PictureController {
     @Resource
     private StringRedisTemplate stringRedisTemplate;
 
-    @Resource
-    private CacheManager cacheManager;
+//    @Resource
+//    private CacheManager cacheManager;
 
     private final Cache<String,String> LOCAL_CACHE =
             Caffeine.newBuilder().initialCapacity(1024)
@@ -220,33 +220,38 @@ public class PictureController {
         //构建缓存key
         String queryCondition = JSONUtil.toJsonStr(pictureQueryRequest);
         String hashKey = DigestUtils.md5DigestAsHex(queryCondition.getBytes());
-        String redisKey = "aipicture:listPictureVOByPage" + hashKey;
-        //从redis缓存中查询
-//        ValueOperations<String, String> valueOps = stringRedisTemplate.opsForValue();
-//        String cachedValue = valueOps.get(redisKey);
-        //从本地缓存钟查询
-//        String cachedValue = LOCAL_CACHE.getIfPresent(redisKey);
-        String cachedValue = cacheManager.get(redisKey);
+        String cacheKey = "aipicture:listPictureVOByPage" + hashKey;
+        //1.从本地缓存中查询
+        String cachedValue = LOCAL_CACHE.getIfPresent(cacheKey);
         if(cachedValue != null) {
             //缓存命中，返回结果
             Page<PictureVO> cachedPage = JSONUtil.toBean(cachedValue, Page.class);
             return ResultUtils.success(cachedPage);
         }
+        //2.本地缓存未命中，查询分布式缓存(Redis)
+        ValueOperations<String, String> valueOps = stringRedisTemplate.opsForValue();
+        cachedValue = valueOps.get(cacheKey);
+        if(cachedValue != null) {
+            //如果命中 Redis,存入本地缓存并返回
+            LOCAL_CACHE.put(cacheKey, cachedValue);
+            Page<PictureVO> cachedPage = JSONUtil.toBean(cachedValue, Page.class);
+            return ResultUtils.success(cachedPage);
+        }
 
-        // 查询数据库
+        // 3.查询数据库
         Page<Picture> picturePage = pictureService.page(new Page<>(current, size),
                 pictureService.getQueryWrapper(pictureQueryRequest));
         // 获取封装类
         Page<PictureVO> pictureVOPage = pictureService.getPictureVOPage(picturePage, request);
 
-        //存入Redis缓存
+        //4.更新缓存
+            //更新edis缓存
         String cacheValue = JSONUtil.toJsonStr(pictureVOPage);
-        //5-10分钟随机过期，防止雪崩
+                //5-10分钟随机过期，防止雪崩
         int cacheExpireTime = 300 + RandomUtil.randomInt(0,300);
-        cacheManager.set(redisKey, cacheValue, cacheExpireTime);
-//        valueOps.set(redisKey, cacheValue, cacheExpireTime, TimeUnit.SECONDS);
-        //存入本地缓存
-//        LOCAL_CACHE.put(redisKey, cacheValue);
+        valueOps.set(cacheKey, cacheValue, cacheExpireTime, TimeUnit.SECONDS);
+            //更新本地缓存
+        LOCAL_CACHE.put(cacheKey, cacheValue);
         return ResultUtils.success(pictureVOPage);
     }
 
