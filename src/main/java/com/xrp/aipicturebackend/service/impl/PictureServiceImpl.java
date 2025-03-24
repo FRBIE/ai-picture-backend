@@ -9,6 +9,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.xrp.aipicturebackend.exception.BusinessException;
 import com.xrp.aipicturebackend.exception.ErrorCode;
 import com.xrp.aipicturebackend.exception.ThrowUtils;
+import com.xrp.aipicturebackend.manager.CosManager;
 import com.xrp.aipicturebackend.manager.upload.FilePictureUpload;
 import com.xrp.aipicturebackend.manager.upload.PictureUploadTemplate;
 import com.xrp.aipicturebackend.manager.upload.UrlPictureUpload;
@@ -25,19 +26,21 @@ import com.xrp.aipicturebackend.model.vo.UserVO;
 import com.xrp.aipicturebackend.service.PictureService;
 import com.xrp.aipicturebackend.mapper.PictureMapper;
 import com.xrp.aipicturebackend.service.UserService;
-import io.swagger.models.auth.In;
 import lombok.extern.slf4j.Slf4j;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -64,6 +67,8 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
 
     @Resource
     private UserService userService;
+    @Autowired
+    private CosManager cosManager;
 
     /**
      * 上传图片
@@ -359,6 +364,52 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         return uploadCount;
     }
 
+    @Override
+    @Async
+    public void clearPictureFile(Picture oldPicture) {
+        // 判断图片是否被多条记录使用
+        String pictureUrl = oldPicture.getUrl();
+        Long count = this.lambdaQuery()
+                .eq(Picture::getUrl, pictureUrl)
+                .count();
+        // 有不止一条记录用到了该图片，不清理
+        if(count > 1) {
+            return;
+        }
+
+        // 从完整URL中提取对象Key
+        String pictureKey = extractObjectKeyFromUrl(pictureUrl);
+        cosManager.deleteObject(pictureKey);
+
+        // 清理缩略图
+        String thumbnailUrl = oldPicture.getThumbnailUrl();
+        if(StrUtil.isNotBlank(thumbnailUrl)) {
+            String thumbnailKey = extractObjectKeyFromUrl(thumbnailUrl);
+            cosManager.deleteObject(thumbnailKey);
+        }
+    }
+    /**
+     * 从COS URL中提取对象Key
+     * @param url 完整的COS URL
+     * @return 对象Key
+     */
+    @Override
+    public String extractObjectKeyFromUrl(String url) {
+        try {
+            URI uri = new URI(url);
+            String path = uri.getPath();
+            // 确保路径以/开头
+            return path.startsWith("/") ? path : "/" + path;
+        } catch (URISyntaxException e) {
+            // 如果URL解析失败，尝试简单处理
+            int index = url.indexOf(".myqcloud.com/");
+            if (index > 0) {
+                return url.substring(index + ".myqcloud.com/".length());
+            }
+            // 如果都不行，返回原始URL（保持原有行为）
+            return url;
+        }
+    }
 
 }
 

@@ -15,10 +15,10 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.servlet.http.HttpServletRequest;
 
 /**
-* @author x
-* @description 针对表【picture(图片)】的数据库操作Service
-* @createDate 2025-03-12 14:56:47
-*/
+ * @author x
+ * @description 针对表【picture(图片)】的数据库操作Service
+ * @createDate 2025-03-12 14:56:47
+ */
 public interface PictureService extends IService<Picture> {
 
     PictureVO uploadPicture(Object inputSource,
@@ -35,13 +35,13 @@ public interface PictureService extends IService<Picture> {
 
     /**
      * 图片审核
+     *
      * @param pictureReviewRequest
      * @param loginUser
      */
-    void doPictureReview(PictureReviewRequest pictureReviewRequest,User loginUser);
+    void doPictureReview(PictureReviewRequest pictureReviewRequest, User loginUser);
 
     void fillReviewParams(Picture picture, User loginUser);
-
 
 
     /**
@@ -56,4 +56,12 @@ public interface PictureService extends IService<Picture> {
             User loginUser
     );
 
+    /**
+     * 图片清理
+     *
+     * @param oldPicture
+     */
+    void clearPictureFile(Picture oldPicture);
+
+    String extractObjectKeyFromUrl(String url);
 }
