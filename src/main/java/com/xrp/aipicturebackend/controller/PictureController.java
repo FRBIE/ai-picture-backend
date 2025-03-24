@@ -13,6 +13,7 @@ import com.xrp.aipicturebackend.constant.UserConstant;
 import com.xrp.aipicturebackend.exception.BusinessException;
 import com.xrp.aipicturebackend.exception.ErrorCode;
 import com.xrp.aipicturebackend.exception.ThrowUtils;
+import com.xrp.aipicturebackend.manager.cache.CacheManager;
 import com.xrp.aipicturebackend.model.dto.picture.*;
 import com.xrp.aipicturebackend.model.entity.Picture;
 import com.xrp.aipicturebackend.model.entity.User;
@@ -22,6 +23,7 @@ import com.xrp.aipicturebackend.model.vo.PictureVO;
 import com.xrp.aipicturebackend.service.PictureService;
 import com.xrp.aipicturebackend.service.UserService;
 import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.util.DigestUtils;
@@ -50,12 +52,14 @@ public class PictureController {
     @Resource
     private StringRedisTemplate stringRedisTemplate;
 
+    @Resource
+    private CacheManager cacheManager;
+
     private final Cache<String,String> LOCAL_CACHE =
             Caffeine.newBuilder().initialCapacity(1024)
                     .maximumSize(10000L)
                     .expireAfterWrite(5L, TimeUnit.MINUTES)
                     .build();
-
 
     /**
      * 上传图片，支持重新上传
@@ -221,7 +225,8 @@ public class PictureController {
 //        ValueOperations<String, String> valueOps = stringRedisTemplate.opsForValue();
 //        String cachedValue = valueOps.get(redisKey);
         //从本地缓存钟查询
-        String cachedValue = LOCAL_CACHE.getIfPresent(redisKey);
+//        String cachedValue = LOCAL_CACHE.getIfPresent(redisKey);
+        String cachedValue = cacheManager.get(redisKey);
         if(cachedValue != null) {
             //缓存命中，返回结果
             Page<PictureVO> cachedPage = JSONUtil.toBean(cachedValue, Page.class);
@@ -237,10 +242,11 @@ public class PictureController {
         //存入Redis缓存
         String cacheValue = JSONUtil.toJsonStr(pictureVOPage);
         //5-10分钟随机过期，防止雪崩
-//        int cacheExpireTime = 300 + RandomUtil.randomInt(0,300);
+        int cacheExpireTime = 300 + RandomUtil.randomInt(0,300);
+        cacheManager.set(redisKey, cacheValue, cacheExpireTime);
 //        valueOps.set(redisKey, cacheValue, cacheExpireTime, TimeUnit.SECONDS);
         //存入本地缓存
-        LOCAL_CACHE.put(redisKey, cacheValue);
+//        LOCAL_CACHE.put(redisKey, cacheValue);
         return ResultUtils.success(pictureVOPage);
     }
 
