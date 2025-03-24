@@ -59,7 +59,12 @@ public abstract class PictureUploadTemplate {
             List<CIObject> objectList = processResults.getObjectList();
             if(CollUtil.isNotEmpty(objectList)) {
                 CIObject compressedCiObject = objectList.get(0);
-                CIObject thumbnailCiObject = objectList.get(1);
+                //缩略图默认等于压缩图
+                CIObject thumbnailCiObject = compressedCiObject;
+                if(objectList.size() > 1) {
+                    //有生成缩略图，才得到缩略图
+                    thumbnailCiObject = objectList.get(1);
+                }
                 //封装压缩图返回结果
                 return buildResult(originFilename,compressedCiObject,thumbnailCiObject);
             }

@@ -67,14 +67,16 @@ public class CosManager {
         compressRule.setFileId(webpKey);
         compressRule.setRule("imageMogr2/format/webp");
         rules.add(compressRule);
-        //缩略图处理
-        PicOperations.Rule thumbnailRule = new PicOperations.Rule();
-        thumbnailRule.setBucket(cosClientConfig.getBucket());
-        String thumbnailKey = FileUtil.mainName(key) + "_thumbnail." + FileUtil.getSuffix(key);
-        thumbnailRule.setFileId(thumbnailKey);
-        //缩放规则 /thumbnail/<Width>x<Height>> (如果大于原图宽高，则不处理) https://cloud.tencent.com/document/product/436/113295
-        thumbnailRule.setRule(String.format("imageMogr2/thumbnail/%sx%s>",128,128));
-        rules.add(thumbnailRule);
+        //缩略图处理 仅对 > 20 KB 的图片生成缩略图
+        if (file.length() > 20 * 1024) {
+            PicOperations.Rule thumbnailRule = new PicOperations.Rule();
+            thumbnailRule.setBucket(cosClientConfig.getBucket());
+            String thumbnailKey = FileUtil.mainName(key) + "_thumbnail." + FileUtil.getSuffix(key);
+            thumbnailRule.setFileId(thumbnailKey);
+            //缩放规则 /thumbnail/<Width>x<Height>> (如果大于原图宽高，则不处理) https://cloud.tencent.com/document/product/436/113295
+            thumbnailRule.setRule(String.format("imageMogr2/thumbnail/%sx%s>",128,128));
+            rules.add(thumbnailRule);
+        }
         //构造处理参数
         picOperations.setRules(rules);
         putObjectRequest.setPicOperations(picOperations);
