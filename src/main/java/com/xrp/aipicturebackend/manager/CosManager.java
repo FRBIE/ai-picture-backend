@@ -15,6 +15,7 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.annotation.Resource;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.List;
 
 @Component
 public class CosManager {  
@@ -58,7 +59,7 @@ public class CosManager {
         // 对图片进行处理(获取基本信息也是处理)
         PicOperations picOperations = new PicOperations();
         picOperations.setIsPicInfo(1); // 1表示返回原图信息
-        ArrayList<PicOperations.Rule> rules = new ArrayList<>();
+        List<PicOperations.Rule> rules = new ArrayList<>();
         //图片压缩(转为 webp 格式)
         String webpKey = FileUtil.mainName(key) + ".webp";
         PicOperations.Rule compressRule = new PicOperations.Rule();
@@ -66,6 +67,14 @@ public class CosManager {
         compressRule.setFileId(webpKey);
         compressRule.setRule("imageMogr2/format/webp");
         rules.add(compressRule);
+        //缩略图处理
+        PicOperations.Rule thumbnailRule = new PicOperations.Rule();
+        thumbnailRule.setBucket(cosClientConfig.getBucket());
+        String thumbnailKey = FileUtil.mainName(key) + "_thumbnail." + FileUtil.getSuffix(key);
+        thumbnailRule.setFileId(thumbnailKey);
+        //缩放规则 /thumbnail/<Width>x<Height>> (如果大于原图宽高，则不处理) https://cloud.tencent.com/document/product/436/113295
+        thumbnailRule.setRule(String.format("imageMogr2/thumbnail/%sx%s>",128,128));
+        rules.add(thumbnailRule);
         //构造处理参数
         picOperations.setRules(rules);
         putObjectRequest.setPicOperations(picOperations);

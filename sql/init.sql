@@ -53,3 +53,7 @@ alter table picture
 -- 创建基于 reviewStatus列的索引
 -- 要根据审核状态筛选图片，所以给该字段添加索引，提升查询性能
 create index idx_reviewStatus on picture(reviewStatus);
+
+alter table picture
+    -- 添加新列
+    add column thumbnailUrl varchar(512) NULL comment '缩略图 url';
