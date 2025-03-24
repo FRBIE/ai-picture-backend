@@ -3,6 +3,8 @@ package com.xrp.aipicturebackend.controller;
 import cn.hutool.core.util.RandomUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import com.xrp.aipicturebackend.annotation.AuthCheck;
 import com.xrp.aipicturebackend.common.BaseResponse;
 import com.xrp.aipicturebackend.common.DeleteRequest;
@@ -47,6 +49,14 @@ public class PictureController {
 
     @Resource
     private StringRedisTemplate stringRedisTemplate;
+
+    private final Cache<String,String> LOCAL_CACHE =
+            Caffeine.newBuilder().initialCapacity(1024)
+                    .maximumSize(10000L)
+                    .expireAfterWrite(5L, TimeUnit.MINUTES)
+                    .build();
+
+
     /**
      * 上传图片，支持重新上传
      *
@@ -208,8 +218,10 @@ public class PictureController {
         String hashKey = DigestUtils.md5DigestAsHex(queryCondition.getBytes());
         String redisKey = "aipicture:listPictureVOByPage" + hashKey;
         //从redis缓存中查询
-        ValueOperations<String, String> valueOps = stringRedisTemplate.opsForValue();
-        String cachedValue = valueOps.get(redisKey);
+//        ValueOperations<String, String> valueOps = stringRedisTemplate.opsForValue();
+//        String cachedValue = valueOps.get(redisKey);
+        //从本地缓存钟查询
+        String cachedValue = LOCAL_CACHE.getIfPresent(redisKey);
         if(cachedValue != null) {
             //缓存命中，返回结果
             Page<PictureVO> cachedPage = JSONUtil.toBean(cachedValue, Page.class);
@@ -225,8 +237,10 @@ public class PictureController {
         //存入Redis缓存
         String cacheValue = JSONUtil.toJsonStr(pictureVOPage);
         //5-10分钟随机过期，防止雪崩
-        int cacheExpireTime = 300 + RandomUtil.randomInt(0,300);
-        valueOps.set(redisKey, cacheValue, cacheExpireTime, TimeUnit.SECONDS);
+//        int cacheExpireTime = 300 + RandomUtil.randomInt(0,300);
+//        valueOps.set(redisKey, cacheValue, cacheExpireTime, TimeUnit.SECONDS);
+        //存入本地缓存
+        LOCAL_CACHE.put(redisKey, cacheValue);
         return ResultUtils.success(pictureVOPage);
     }
 
