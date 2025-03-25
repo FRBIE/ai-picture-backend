@@ -2,8 +2,10 @@ package com.xrp.aipicturebackend.model.dto.picture;
 
 import lombok.Data;
 
+import java.io.Serializable;
+
 @Data
-public class PictureUploadByBatchRequest {
+public class PictureUploadByBatchRequest implements Serializable {
     /**
      * 名称前缀
      */

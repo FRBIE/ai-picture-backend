@@ -121,7 +121,7 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
             picName = pictureUploadRequest.getPicName();
         }
         picture.setName(picName);
-        picture.setName(uploadPictureResult.getPicName());
+//        picture.setName(uploadPictureResult.getPicName()); BUG 重复设置名称导致图片名称失效
         picture.setPicSize(uploadPictureResult.getPicSize());
         picture.setPicWidth(uploadPictureResult.getPicWidth());
         picture.setPicHeight(uploadPictureResult.getPicHeight());
