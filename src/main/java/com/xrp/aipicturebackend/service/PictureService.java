@@ -2,10 +2,7 @@ package com.xrp.aipicturebackend.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.xrp.aipicturebackend.model.dto.picture.PictureQueryRequest;
-import com.xrp.aipicturebackend.model.dto.picture.PictureReviewRequest;
-import com.xrp.aipicturebackend.model.dto.picture.PictureUploadByBatchRequest;
-import com.xrp.aipicturebackend.model.dto.picture.PictureUploadRequest;
+import com.xrp.aipicturebackend.model.dto.picture.*;
 import com.xrp.aipicturebackend.model.entity.Picture;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.xrp.aipicturebackend.model.entity.User;
@@ -30,6 +27,10 @@ public interface PictureService extends IService<Picture> {
     PictureVO getPictureVO(Picture picture, HttpServletRequest request);
 
     Page<PictureVO> getPictureVOPage(Page<Picture> picturePage, HttpServletRequest request);
+
+    void deletePicture(long pictureId, User loginUser);
+
+    void editPicture(PictureEditRequest pictureEditRequest, User loginUser);
 
     void validPicture(Picture picture);
 
@@ -64,4 +65,6 @@ public interface PictureService extends IService<Picture> {
     void clearPictureFile(Picture oldPicture);
 
     String extractObjectKeyFromUrl(String url);
+
+    void checkPictureAuth(User loginUser, Picture picture);
 }

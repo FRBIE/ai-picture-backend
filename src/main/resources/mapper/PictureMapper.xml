@@ -6,6 +6,7 @@
 
     <resultMap id="BaseResultMap" type="com.xrp.aipicturebackend.model.entity.Picture">
             <id property="id" column="id" jdbcType="BIGINT"/>
+            <id property="spaceId" column="spaceId" jdbcType="BIGINT"/>
             <result property="url" column="url" jdbcType="VARCHAR"/>
             <result property="thumbnailUrl" column="thumbnailUrl" jdbcType="VARCHAR"/>
             <result property="name" column="name" jdbcType="VARCHAR"/>
@@ -29,7 +30,7 @@
     </resultMap>
 
     <sql id="Base_Column_List">
-        id,url,thumbnailUrl,name,
+        id,spaceId,url,thumbnailUrl,name,
         introduction,category,tags,
         picSize,picWidth,picHeight,
         picScale,picFormat,userId,
