@@ -195,7 +195,7 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
             }
             return PictureVO.objToVo(picture);
         });
-        return null;
+        return PictureVO.objToVo(picture);
     }
 
     /**
