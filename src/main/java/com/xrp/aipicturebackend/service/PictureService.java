@@ -10,6 +10,7 @@ import com.xrp.aipicturebackend.model.vo.PictureVO;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.List;
 
 /**
  * @author x
@@ -56,6 +57,8 @@ public interface PictureService extends IService<Picture> {
             PictureUploadByBatchRequest pictureUploadByBatchRequest,
             User loginUser
     );
+
+    List<PictureVO> searchPictureByColor(Long spaceId, String picColor, User loginUser);
 
     /**
      * 图片清理
