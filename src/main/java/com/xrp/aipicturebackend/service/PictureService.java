@@ -7,6 +7,7 @@ import com.xrp.aipicturebackend.model.entity.Picture;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.xrp.aipicturebackend.model.entity.User;
 import com.xrp.aipicturebackend.model.vo.PictureVO;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
@@ -59,6 +60,9 @@ public interface PictureService extends IService<Picture> {
     );
 
     List<PictureVO> searchPictureByColor(Long spaceId, String picColor, User loginUser);
+
+    @Transactional(rollbackFor = Exception.class)
+    void editPictureByBatch(PictureEditByBatchRequest pictureEditByBatchRequest, User loginUser);
 
     /**
      * 图片清理
