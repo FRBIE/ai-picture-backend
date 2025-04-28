@@ -13,12 +13,16 @@ import com.xrp.aipicturebackend.model.dto.space.SpaceAddRequest;
 
 import com.xrp.aipicturebackend.model.dto.space.SpaceQueryRequest;
 import com.xrp.aipicturebackend.model.entity.Space;
+import com.xrp.aipicturebackend.model.entity.SpaceUser;
 import com.xrp.aipicturebackend.model.entity.User;
 import com.xrp.aipicturebackend.model.enums.SpaceLevelEnum;
+import com.xrp.aipicturebackend.model.enums.SpaceRoleEnum;
+import com.xrp.aipicturebackend.model.enums.SpaceTypeEnum;
 import com.xrp.aipicturebackend.model.vo.SpaceVO;
 import com.xrp.aipicturebackend.model.vo.UserVO;
 import com.xrp.aipicturebackend.service.SpaceService;
 import com.xrp.aipicturebackend.mapper.SpaceMapper;
+import com.xrp.aipicturebackend.service.SpaceUserService;
 import com.xrp.aipicturebackend.service.UserService;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
@@ -45,6 +49,9 @@ public class SpaceServiceImpl extends ServiceImpl<SpaceMapper, Space>
 
     @Resource
     private UserService userService;
+
+    @Resource
+    private SpaceUserService spaceUserService;
 
     @Override
     public void validSpace(Space space, boolean add) {
@@ -122,6 +129,15 @@ public class SpaceServiceImpl extends ServiceImpl<SpaceMapper, Space>
                 // 写入数据库
                 boolean result = this.save(space);
                 ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
+                // 如果是团队空间，关联新增团队成员记录
+                if (SpaceTypeEnum.TEAM.getValue() == spaceAddRequest.getSpaceType()) {
+                    SpaceUser spaceUser = new SpaceUser();
+                    spaceUser.setSpaceId(space.getId());
+                    spaceUser.setUserId(userId);
+                    spaceUser.setSpaceRole(SpaceRoleEnum.ADMIN.getValue()); //默认创建者为管理员
+                    result = spaceUserService.save(spaceUser);
+                    ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR, "创建团队成员记录失败");
+                }
                 // 返回新写入的数据 id
                 return space.getId();
             });

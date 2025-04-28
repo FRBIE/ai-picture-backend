@@ -9,6 +9,7 @@ import com.xrp.aipicturebackend.constant.UserConstant;
 import com.xrp.aipicturebackend.exception.BusinessException;
 import com.xrp.aipicturebackend.exception.ErrorCode;
 import com.xrp.aipicturebackend.exception.ThrowUtils;
+import com.xrp.aipicturebackend.manager.auth.SpaceUserAuthManager;
 import com.xrp.aipicturebackend.model.dto.space.*;
 import com.xrp.aipicturebackend.model.entity.Space;
 import com.xrp.aipicturebackend.model.entity.User;
@@ -36,6 +37,8 @@ public class SpaceController {
     @Resource
     private SpaceService spaceService;
 
+    @Resource
+    private SpaceUserAuthManager spaceUserAuthManager;
 
     /**
      * 编辑空间（给用户使用）
@@ -158,8 +161,12 @@ public class SpaceController {
         // 查询数据库
         Space space = spaceService.getById(id);
         ThrowUtils.throwIf(space == null, ErrorCode.NOT_FOUND_ERROR);
+        SpaceVO spaceVO = spaceService.getSpaceVO(space, request);
+        User loginUser = userService.getLoginUser(request);
+        List<String> permissionList = spaceUserAuthManager.getPermissionList(space, loginUser);
+        spaceVO.setPermissionList(permissionList);
         // 获取封装类
-        return ResultUtils.success(spaceService.getSpaceVO(space, request));
+        return ResultUtils.success(spaceVO);
     }
 
     /**
