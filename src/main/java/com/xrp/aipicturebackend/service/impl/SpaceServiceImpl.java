@@ -9,6 +9,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.xrp.aipicturebackend.exception.BusinessException;
 import com.xrp.aipicturebackend.exception.ErrorCode;
 import com.xrp.aipicturebackend.exception.ThrowUtils;
+import com.xrp.aipicturebackend.manager.sharding.DynamicShardingManager;
 import com.xrp.aipicturebackend.model.dto.space.SpaceAddRequest;
 
 import com.xrp.aipicturebackend.model.dto.space.SpaceQueryRequest;
@@ -25,6 +26,7 @@ import com.xrp.aipicturebackend.mapper.SpaceMapper;
 import com.xrp.aipicturebackend.service.SpaceUserService;
 import com.xrp.aipicturebackend.service.UserService;
 import org.springframework.beans.BeanUtils;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
 
@@ -52,6 +54,10 @@ public class SpaceServiceImpl extends ServiceImpl<SpaceMapper, Space>
 
     @Resource
     private SpaceUserService spaceUserService;
+
+    @Lazy//懒加载解决循环依赖
+    @Resource
+    private DynamicShardingManager dynamicShardingManager;
 
     @Override
     public void validSpace(Space space, boolean add) {
@@ -138,6 +144,8 @@ public class SpaceServiceImpl extends ServiceImpl<SpaceMapper, Space>
                     result = spaceUserService.save(spaceUser);
                     ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR, "创建团队成员记录失败");
                 }
+                // 创建分表
+                dynamicShardingManager.createSpacePictureTable(space);
                 // 返回新写入的数据 id
                 return space.getId();
             });
