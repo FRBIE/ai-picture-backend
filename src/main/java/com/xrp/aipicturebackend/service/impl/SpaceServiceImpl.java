@@ -54,10 +54,10 @@ public class SpaceServiceImpl extends ServiceImpl<SpaceMapper, Space>
 
     @Resource
     private SpaceUserService spaceUserService;
-
-    @Lazy//懒加载解决循环依赖
-    @Resource
-    private DynamicShardingManager dynamicShardingManager;
+      ////分库分表逻辑复杂，另外需要补充公共图库spaceId不能为null的逻辑，暂时不应用
+//    @Lazy//懒加载解决循环依赖
+//    @Resource
+//    private DynamicShardingManager dynamicShardingManager;
 
     @Override
     public void validSpace(Space space, boolean add) {
@@ -144,8 +144,8 @@ public class SpaceServiceImpl extends ServiceImpl<SpaceMapper, Space>
                     result = spaceUserService.save(spaceUser);
                     ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR, "创建团队成员记录失败");
                 }
-                // 创建分表
-                dynamicShardingManager.createSpacePictureTable(space);
+                // 创建分表 //分库分表逻辑复杂，另外需要补充公共图库spaceId不能为null的逻辑，暂时不应用
+//                dynamicShardingManager.createSpacePictureTable(space);
                 // 返回新写入的数据 id
                 return space.getId();
             });

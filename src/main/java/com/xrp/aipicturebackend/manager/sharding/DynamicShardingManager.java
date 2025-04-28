@@ -25,7 +25,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-@Component
+//@Component //分库分表逻辑复杂，另外需要补充公共图库spaceId不能为null的逻辑，暂时不应用
 @Slf4j
 public class DynamicShardingManager {
 
